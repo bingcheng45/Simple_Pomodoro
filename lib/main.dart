@@ -64,7 +64,7 @@ class _SkeletonState extends State<Skeleton> {
   int minute;
   int seconds;
   var now = DateTime.now();
-  int _totalSeconds = 10; //actual total seconds to countdown
+  int _totalSeconds = 25 * 60; //actual total seconds to countdown
   int _start;
   int _current;
   bool isRunning = false;
@@ -130,7 +130,7 @@ class _SkeletonState extends State<Skeleton> {
     //Timer.periodic(Duration(seconds: 1), (Timer t) => _setTime());//runs forever
   }
 
-  void setupTimer(){
+  void setupTimer() {
     _start = _totalSeconds;
     _current = _totalSeconds;
     minute = getMinute(_totalSeconds);
@@ -155,23 +155,28 @@ class _SkeletonState extends State<Skeleton> {
             startTimer();
           }
         },
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: <Widget>[
-            topText(context),
-            bottomText(context),
-          ],
+        child: Container(
+          height: MediaQuery.of(context).size.height,
+          width: MediaQuery.of(context).size.width,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            //mainAxisAlignment: MainAxisAlignment.end,
+            children: <Widget>[
+              FittedBox(child: topText(context)),
+              //SizedBox(height: MediaQuery.of(context).size.height*0.2,),
+              FittedBox(child: bottomText(context)),
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget topText(context) {
+    double paddingW = MediaQuery.of(context).size.width * 0.1;
+    double paddingH = MediaQuery.of(context).size.height;
     return Container(
-      alignment: Alignment.topCenter,
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).size.height * 0.4, //0.22 is center
-      ),
+      padding: EdgeInsets.symmetric(horizontal: paddingW),
       child: Opacity(
         opacity: 1,
         child: Text(
@@ -186,11 +191,10 @@ class _SkeletonState extends State<Skeleton> {
   }
 
   Widget bottomText(context) {
+    double paddingW = MediaQuery.of(context).size.width * 0.1;
+    double paddingH = MediaQuery.of(context).size.height * 0.2;
     return Container(
-      alignment: Alignment.bottomCenter,
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).size.height * 0.18,
-      ),
+      padding: EdgeInsets.symmetric(horizontal: paddingW,vertical: paddingH),
       child: Opacity(
         opacity: 0.5,
         child: Text(
