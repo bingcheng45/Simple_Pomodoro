@@ -52,7 +52,7 @@ class _HomeState extends State<Home> {
 }
 
 class Skeleton extends StatefulWidget {
-  Function switchBGColor;
+  final Function switchBGColor;
 
   Skeleton(this.switchBGColor);
 
@@ -64,10 +64,16 @@ class _SkeletonState extends State<Skeleton> {
   int minute;
   int seconds;
   var now = DateTime.now();
-  int _totalSeconds = 25 * 60; //actual total seconds to countdown
+  int _totalSeconds = 3; //actual total seconds to countdown
   int _start;
   int _current;
   bool isRunning = false;
+  bool _btmTextVisible = true;
+  String pomodoroText = 'Tap to begin';
+  String breakText = 'Take a short break!';
+  double paddingheightTop = 0.0;
+  double paddingheightBtm = 0.4;
+
 
   //start the countdown timer
   void startTimer() {
@@ -153,18 +159,33 @@ class _SkeletonState extends State<Skeleton> {
           //TODO:
           if (isRunning == false) {
             startTimer();
+            setState(() {
+              _btmTextVisible = !_btmTextVisible;
+              Future.delayed(const Duration(milliseconds: 1000), () {
+                _btmTextVisible = !_btmTextVisible;
+                if (globals.index == 0) {
+                  pomodoroText = 'Let\'s do it!';
+                  breakText = 'Take a short break!';
+                } else {
+                  breakText = 'Go scroll Facebook';
+                  pomodoroText = 'Tap to begin';
+                }
+              });
+            });
           }
         },
         child: Container(
           height: MediaQuery.of(context).size.height,
           width: MediaQuery.of(context).size.width,
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            //mainAxisAlignment: MainAxisAlignment.spaceAround,
             //mainAxisAlignment: MainAxisAlignment.end,
             children: <Widget>[
               FittedBox(child: topText(context)),
               //SizedBox(height: MediaQuery.of(context).size.height*0.2,),
-              FittedBox(child: bottomText(context)),
+              FittedBox(
+                child: bottomText(context),
+              ),
             ],
           ),
         ),
@@ -174,9 +195,9 @@ class _SkeletonState extends State<Skeleton> {
 
   Widget topText(context) {
     double paddingW = MediaQuery.of(context).size.width * 0.1;
-    double paddingH = MediaQuery.of(context).size.height;
+    double paddingH = MediaQuery.of(context).size.height * paddingheightTop;
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: paddingW),
+      padding: EdgeInsets.only(left: paddingW, right: paddingW, top: paddingH),
       child: Opacity(
         opacity: 1,
         child: Text(
@@ -192,16 +213,20 @@ class _SkeletonState extends State<Skeleton> {
 
   Widget bottomText(context) {
     double paddingW = MediaQuery.of(context).size.width * 0.1;
-    double paddingH = MediaQuery.of(context).size.height * 0.2;
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: paddingW,vertical: paddingH),
-      child: Opacity(
-        opacity: 0.5,
-        child: Text(
-          'Tap to begin',
-          style: TextStyle(
-            color: Theme.of(context).textSelectionColor,
-            fontSize: 54,
+    double paddingH = MediaQuery.of(context).size.height * paddingheightBtm;
+    return AnimatedOpacity(
+      opacity: _btmTextVisible ? 1.0 : 0.0,
+      duration: Duration(milliseconds: 1000),
+      child: Container(
+        padding: EdgeInsets.only(left: paddingW, right: paddingW, top: paddingH),
+        child: Opacity(
+          opacity: 0.5,
+          child: Text(
+            (globals.index == 0) ? pomodoroText : breakText,
+            style: TextStyle(
+              color: Theme.of(context).textSelectionColor,
+              fontSize: 54,
+            ),
           ),
         ),
       ),
