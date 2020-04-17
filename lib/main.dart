@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ffi';
 import 'package:quiver/async.dart';
 import 'package:flutter/material.dart';
 import 'package:simple_pomodoro/global.dart' as globals;
@@ -69,17 +70,19 @@ class _SkeletonState extends State<Skeleton> {
   int _current;
   bool isRunning = false;
   bool _btmTextVisible = true;
+  bool firstTap = false;
   String pomodoroText = 'Tap to begin';
   String breakText = 'Take a short break!';
   double paddingheightTop = 0.0;
   double paddingheightBtm = 0.4;
+  CountdownTimer countDownTimer;
 
-
+  var timerObj;
   //start the countdown timer
   void startTimer() {
     isRunning = true;
     print('started');
-    CountdownTimer countDownTimer = new CountdownTimer(
+    countDownTimer = new CountdownTimer(
       new Duration(seconds: _start),
       new Duration(seconds: 1),
     );
@@ -92,18 +95,21 @@ class _SkeletonState extends State<Skeleton> {
         minute = getMinute(_current);
       });
     });
+    timerObj = sub;
+
 
     sub.onDone(() {
-      print("Done");
-      isRunning = false;
-      widget.switchBGColor();
-      setTimer();
-      countDownTimer = new CountdownTimer(
-        new Duration(seconds: _start),
-        new Duration(seconds: 1),
-      );
+      onFinished();
       sub.cancel();
     });
+  }
+
+  void onFinished() {
+    print("Done");
+    isRunning = false;
+    widget.switchBGColor();
+    firstTap = false;
+    setTimer();
   }
 
   void setTimer() {
@@ -151,6 +157,9 @@ class _SkeletonState extends State<Skeleton> {
   }
 
   Widget inkWellButton(context) {
+    double height = MediaQuery.of(context).size.height;
+    double width = MediaQuery.of(context).size.width;
+
     return Material(
       color: globals.bgColor[globals.index],
       child: InkWell(
@@ -171,20 +180,43 @@ class _SkeletonState extends State<Skeleton> {
                   pomodoroText = 'Tap to begin';
                 }
               });
+              if (!firstTap) {
+                firstTap = !firstTap; //change first tap to true if false.
+              }
             });
           }
         },
+        onLongPress: () {
+          onFinished();
+          timerObj.cancel();
+        },
         child: Container(
-          height: MediaQuery.of(context).size.height,
-          width: MediaQuery.of(context).size.width,
+          height: height,
+          width: width,
           child: Column(
             //mainAxisAlignment: MainAxisAlignment.spaceAround,
             //mainAxisAlignment: MainAxisAlignment.end,
             children: <Widget>[
-              FittedBox(child: topText(context)),
+              AnimatedContainer(
+                padding: firstTap
+                    ? EdgeInsets.only(top: height * 0.2)
+                    : EdgeInsets.only(top: height * 0.0),
+                duration: Duration(seconds: 2),
+                curve: Curves.easeInOut,
+                child: FittedBox(
+                  child: topText(context),
+                ),
+              ),
               //SizedBox(height: MediaQuery.of(context).size.height*0.2,),
-              FittedBox(
-                child: bottomText(context),
+              AnimatedContainer(
+                padding: firstTap
+                    ? EdgeInsets.only(top: height * 0.2)
+                    : EdgeInsets.only(top: height * 0.4),
+                duration: Duration(seconds: 2),
+                curve: Curves.easeInOut,
+                child: FittedBox(
+                  child: bottomText(context),
+                ),
               ),
             ],
           ),
@@ -195,9 +227,9 @@ class _SkeletonState extends State<Skeleton> {
 
   Widget topText(context) {
     double paddingW = MediaQuery.of(context).size.width * 0.1;
-    double paddingH = MediaQuery.of(context).size.height * paddingheightTop;
+    //double paddingH = MediaQuery.of(context).size.height * paddingheightTop;
     return Container(
-      padding: EdgeInsets.only(left: paddingW, right: paddingW, top: paddingH),
+      padding: EdgeInsets.symmetric(horizontal: paddingW),
       child: Opacity(
         opacity: 1,
         child: Text(
@@ -213,12 +245,12 @@ class _SkeletonState extends State<Skeleton> {
 
   Widget bottomText(context) {
     double paddingW = MediaQuery.of(context).size.width * 0.1;
-    double paddingH = MediaQuery.of(context).size.height * paddingheightBtm;
+    //double paddingH = MediaQuery.of(context).size.height * paddingheightBtm;
     return AnimatedOpacity(
       opacity: _btmTextVisible ? 1.0 : 0.0,
       duration: Duration(milliseconds: 1000),
       child: Container(
-        padding: EdgeInsets.only(left: paddingW, right: paddingW, top: paddingH),
+        padding: EdgeInsets.symmetric(horizontal: paddingW),
         child: Opacity(
           opacity: 0.5,
           child: Text(
