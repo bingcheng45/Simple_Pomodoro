@@ -65,7 +65,7 @@ class _SkeletonState extends State<Skeleton> {
   int minute;
   int seconds;
   var now = DateTime.now();
-  int _totalSeconds = 3; //actual total seconds to countdown
+  int _totalSeconds = 25 * 60; //actual total seconds to countdown
   int _start;
   int _current;
   bool isRunning = false;
@@ -115,9 +115,9 @@ class _SkeletonState extends State<Skeleton> {
   void setTimer() {
     setState(() {
       if (globals.index == 0) {
-        _totalSeconds = 7;
+        _totalSeconds = 25* 60;
       } else {
-        _totalSeconds = 5;
+        _totalSeconds = 5 * 60;
       }
       setupTimer();
     });
