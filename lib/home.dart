@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:simple_pomodoro/global.dart' as globals;
 import 'package:simple_pomodoro/skeleton.dart';
+import 'package:rect_getter/rect_getter.dart';
 
 class Home extends StatefulWidget {
   Home({Key key}) : super(key: key);
@@ -23,13 +24,21 @@ class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // appBar: AppBar(
-
-      //   elevation: 0.0,
-      //   backgroundColor: globals.bgColor[globals.index],
-      // ),
-      body: Skeleton(switchBGColor),
+      body: Stack(
+        children: <Widget>[
+          Skeleton(switchBGColor),
+          Positioned(
+            top: MediaQuery.of(context).padding.top,
+            right: 0,
+            child: FloatingActionButton(
+              backgroundColor: Colors.transparent,
+              elevation: 0.0,
+              child: Icon(Icons.settings),
+              onPressed: null,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
-

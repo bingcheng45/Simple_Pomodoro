@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
 import 'package:quiver/async.dart';
-import 'package:rect_getter/rect_getter.dart';
+
 
 class Skeleton extends StatefulWidget {
   final Function switchBGColor;
