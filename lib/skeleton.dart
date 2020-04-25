@@ -4,12 +4,10 @@ import 'package:flutter/services.dart';
 import 'dart:async';
 import 'package:quiver/async.dart';
 
-
 class Skeleton extends StatefulWidget {
   final Function switchBGColor;
 
   Skeleton(this.switchBGColor);
-
   @override
   _SkeletonState createState() => _SkeletonState();
 }
@@ -29,6 +27,23 @@ class _SkeletonState extends State<Skeleton> {
   double paddingheightTop = 0.0;
   double paddingheightBtm = 0.4;
   CountdownTimer countDownTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    setupTimer();
+    SystemChrome.setSystemUIOverlayStyle(
+      SystemUiOverlayStyle(statusBarColor: globals.bgColor[globals.index]),
+    );
+    //Timer.periodic(Duration(seconds: 1), (Timer t) => _setTime());//runs forever
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: inkWellButton(context),
+    );
+  }
 
   var timerObj;
   //start the countdown timer
@@ -90,16 +105,6 @@ class _SkeletonState extends State<Skeleton> {
     return current % 60;
   }
 
-  @override
-  void initState() {
-    super.initState();
-    setupTimer();
-    SystemChrome.setSystemUIOverlayStyle(
-      SystemUiOverlayStyle(statusBarColor: globals.bgColor[globals.index]),
-    );
-    //Timer.periodic(Duration(seconds: 1), (Timer t) => _setTime());//runs forever
-  }
-
   void setupTimer() {
     _start = _totalSeconds;
     _current = _totalSeconds;
@@ -107,85 +112,73 @@ class _SkeletonState extends State<Skeleton> {
     seconds = getSeconds(_totalSeconds);
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: inkWellButton(context),
-    );
-  }
-
   Widget inkWellButton(context) {
     double height = MediaQuery.of(context).size.height;
     double width = MediaQuery.of(context).size.width;
-    
+
     SystemChrome.setSystemUIOverlayStyle(
       SystemUiOverlayStyle(statusBarColor: globals.bgColor[globals.index]),
     );
-    return AnimatedContainer(
-      duration: Duration(milliseconds: 700),
-      curve: Curves.fastOutSlowIn,
-      color: globals.bgColor[globals.index],
-      child: GestureDetector(
-        onLongPressUp: () {
-          onFinished();
-          timerObj.cancel();
-        },
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            splashColor: Colors.white54,
-            onTap: () {
-              //TODO:
-              if (isRunning == false) {
-                startTimer();
-                setState(() {
+    return GestureDetector(
+      onLongPressUp: () {
+        onFinished();
+        timerObj.cancel();
+      },
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          splashColor: Colors.white54,
+          onTap: () {
+            //TODO:
+            if (isRunning == false) {
+              startTimer();
+              setState(() {
+                _btmTextVisible = !_btmTextVisible;
+                Future.delayed(const Duration(milliseconds: 1000), () {
                   _btmTextVisible = !_btmTextVisible;
-                  Future.delayed(const Duration(milliseconds: 1000), () {
-                    _btmTextVisible = !_btmTextVisible;
-                    if (globals.index == 0) {
-                      pomodoroText = 'Let\'s do it!';
-                      breakText = 'Take a short break!';
-                    } else {
-                      breakText = 'Go scroll Facebook';
-                      pomodoroText = 'Tap to begin';
-                    }
-                  });
-                  if (!firstTap) {
-                    firstTap = !firstTap; //change first tap to true if false.
+                  if (globals.index == 0) {
+                    pomodoroText = 'Let\'s do it!';
+                    breakText = 'Take a short break!';
+                  } else {
+                    breakText = 'Go scroll Facebook';
+                    pomodoroText = 'Tap to begin';
                   }
                 });
-              }
-            },
-            child: Container(
-              height: height,
-              width: width,
-              child: Column(
-                //mainAxisAlignment: MainAxisAlignment.spaceAround,
-                //mainAxisAlignment: MainAxisAlignment.end,
-                children: <Widget>[
-                  AnimatedContainer(
-                    padding: firstTap
-                        ? EdgeInsets.only(top: height * 0.3)
-                        : EdgeInsets.only(top: height * 0.1),
-                    duration: Duration(seconds: 2),
-                    curve: Curves.easeInOut,
-                    child: FittedBox(
-                      child: topText(context),
-                    ),
+                if (!firstTap) {
+                  firstTap = !firstTap; //change first tap to true if false.
+                }
+              });
+            }
+          },
+          child: Container(
+            height: height,
+            width: width,
+            child: Column(
+              //mainAxisAlignment: MainAxisAlignment.spaceAround,
+              //mainAxisAlignment: MainAxisAlignment.end,
+              children: <Widget>[
+                AnimatedContainer(
+                  padding: firstTap
+                      ? EdgeInsets.only(top: height * 0.3)
+                      : EdgeInsets.only(top: height * 0.1),
+                  duration: Duration(seconds: 2),
+                  curve: Curves.easeInOut,
+                  child: FittedBox(
+                    child: topText(context),
                   ),
-                  //SizedBox(height: MediaQuery.of(context).size.height*0.2,),
-                  AnimatedContainer(
-                    padding: firstTap
-                        ? EdgeInsets.only(top: height * 0.3)
-                        : EdgeInsets.only(top: height * 0.5),
-                    duration: Duration(seconds: 2),
-                    curve: Curves.easeInOut,
-                    child: FittedBox(
-                      child: bottomText(context),
-                    ),
+                ),
+                //SizedBox(height: MediaQuery.of(context).size.height*0.2,),
+                AnimatedContainer(
+                  padding: firstTap
+                      ? EdgeInsets.only(top: height * 0.3)
+                      : EdgeInsets.only(top: height * 0.5),
+                  duration: Duration(seconds: 2),
+                  curve: Curves.easeInOut,
+                  child: FittedBox(
+                    child: bottomText(context),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
