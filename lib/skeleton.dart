@@ -43,7 +43,26 @@ class _SkeletonState extends State<Skeleton> {
   var initializationSettings;
 
   void _showNotification() async {
-    await _demoNotification();
+    await _demoNotification2();
+  }
+
+  Future<void> _demoNotification2() async {
+    var scheduledNotificationDateTime =
+        DateTime.now().add(Duration(seconds: _totalSeconds));
+    var androidPlatformChannelSpecifics = AndroidNotificationDetails(
+        'your other channel id',
+        'your other channel name',
+        'your other channel description');
+    var iOSPlatformChannelSpecifics = IOSNotificationDetails();
+    NotificationDetails platformChannelSpecifics = NotificationDetails(
+        androidPlatformChannelSpecifics, iOSPlatformChannelSpecifics);
+    await flutterLocalNotificationsPlugin.schedule(
+        0,
+        'Simple Pomodoro',
+        'Break Time is over!',
+        scheduledNotificationDateTime,
+        platformChannelSpecifics);
+    
   }
 
   Future<void> _demoNotification() async {
@@ -79,8 +98,7 @@ class _SkeletonState extends State<Skeleton> {
       SystemUiOverlayStyle(statusBarColor: globals.bgColor[globals.index]),
     );
 
-    initializationSettingsAndroid =
-        AndroidInitializationSettings('app_icon');
+    initializationSettingsAndroid = AndroidInitializationSettings('app_icon');
     initializationSettingsIOS = new IOSInitializationSettings(
         onDidReceiveLocalNotification: onDidReceiveLocalNotification);
     initializationSettings = new InitializationSettings(
@@ -183,7 +201,7 @@ class _SkeletonState extends State<Skeleton> {
           });
         });
       } else {
-        _totalSeconds = 5 * 60; //ned insert break time here
+        _totalSeconds = 5; //ned insert break time here
       }
       setupTimer();
     });
@@ -250,7 +268,6 @@ class _SkeletonState extends State<Skeleton> {
                 }
               });
             }
-            
           },
           child: Container(
             height: height,
