@@ -17,6 +17,14 @@ class _HomeState extends State<Home> {
   GlobalKey rectGetterKey = RectGetter.createGlobalKey();
   Rect rect;
   bool settingPage = false;
+  ValueNotifier<int> settingsUpdated = new ValueNotifier(0);
+
+  void changedSettings() {
+    setState(() {
+      settingsUpdated.value += 1;
+      print(" changed my settings liao ${settingsUpdated.value}");
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +32,12 @@ class _HomeState extends State<Home> {
       body: Stack(
         children: <Widget>[
           backgroundColor(),
-          Skeleton(switchBGColor),
+          ValueListenableBuilder(
+            valueListenable: settingsUpdated,
+            builder: (BuildContext context, int value, Widget child) {
+              return Skeleton(switchBGColor);
+            },
+          ),
           settingBtn(),
           _ripple(),
         ],
@@ -44,7 +57,7 @@ class _HomeState extends State<Home> {
   void _goToNextPage() {
     Navigator.of(context)
         .push(MaterialPageRoute(
-          builder: (context) => Settings(),
+          builder: (context) => Settings(changedSettings),
         ))
         .then((_) => setState(() => rect = null));
   }

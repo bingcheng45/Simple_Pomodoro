@@ -1,8 +1,11 @@
+import 'package:flutter/cupertino.dart';
 import 'package:simple_pomodoro/global.dart' as globals;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
 import 'package:quiver/async.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class Skeleton extends StatefulWidget {
   final Function switchBGColor;
@@ -13,12 +16,14 @@ class Skeleton extends StatefulWidget {
 }
 
 class _SkeletonState extends State<Skeleton> {
-  int minute;
-  int seconds;
+  int minute = 0;
+  int seconds = 0;
+  int bMinute = 0;
+  int bSeconds = 0;
   var now = DateTime.now();
   int _totalSeconds = 25 * 60; //actual total seconds to countdown
-  int _start;
-  int _current;
+  int _start = 0;
+  int _current = 0;
   bool isRunning = false;
   bool _btmTextVisible = true;
   bool firstTap = false;
@@ -27,15 +32,92 @@ class _SkeletonState extends State<Skeleton> {
   double paddingheightTop = 0.0;
   double paddingheightBtm = 0.4;
   CountdownTimer countDownTimer;
+  final hKeyW = 'hour_key_work';
+  final mKeyW = 'minute_key_work';
+
+  //notification
+  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
+  var initializationSettingsAndroid;
+  var initializationSettingsIOS;
+  var initializationSettings;
+
+  void _showNotification() async {
+    await _demoNotification();
+  }
+
+  Future<void> _demoNotification() async {
+    var androidPlatformChannelSpecifics = AndroidNotificationDetails(
+        'channel_ID', 'channel name', 'channel description',
+        importance: Importance.Max,
+        priority: Priority.High,
+        ticker: 'test ticker');
+
+    var iOSChannelSpecifics = IOSNotificationDetails();
+    var platformChannelSpecifics = NotificationDetails(
+        androidPlatformChannelSpecifics, iOSChannelSpecifics);
+
+    await flutterLocalNotificationsPlugin.show(0, 'Hello, buddy',
+        'A message from flutter buddy', platformChannelSpecifics,
+        payload: 'test oayload');
+  }
+
+  //end of notification
 
   @override
   void initState() {
     super.initState();
-    setupTimer();
+
+    _getTotalSeconds().then((totalSeconds) {
+      setState(() {
+        _totalSeconds = totalSeconds;
+        print('total seconds now $_totalSeconds earlier');
+        setupTimer();
+      });
+    });
     SystemChrome.setSystemUIOverlayStyle(
       SystemUiOverlayStyle(statusBarColor: globals.bgColor[globals.index]),
     );
+
+    initializationSettingsAndroid =
+        AndroidInitializationSettings('app_icon');
+    initializationSettingsIOS = new IOSInitializationSettings(
+        onDidReceiveLocalNotification: onDidReceiveLocalNotification);
+    initializationSettings = new InitializationSettings(
+        initializationSettingsAndroid, initializationSettingsIOS);
+    flutterLocalNotificationsPlugin.initialize(initializationSettings,
+        onSelectNotification: onSelectNotification);
+
     //Timer.periodic(Duration(seconds: 1), (Timer t) => _setTime());//runs forever
+  }
+
+  Future onSelectNotification(String payload) async {
+    if (payload != null) {
+      debugPrint('Notification payload: $payload');
+    }
+    await Navigator.push(
+        context, MaterialPageRoute(builder: (context) => SecondRoute()));
+  }
+
+  Future onDidReceiveLocalNotification(
+      int id, String title, String body, String payload) async {
+    await showDialog(
+        context: context,
+        builder: (BuildContext context) => CupertinoAlertDialog(
+              title: Text(title),
+              content: Text(body),
+              actions: <Widget>[
+                CupertinoDialogAction(
+                  isDefaultAction: true,
+                  child: Text('Ok'),
+                  onPressed: () async {
+                    Navigator.of(context, rootNavigator: true).pop();
+                    await Navigator.push(context,
+                        MaterialPageRoute(builder: (context) => SecondRoute()));
+                  },
+                )
+              ],
+            ));
   }
 
   @override
@@ -45,11 +127,18 @@ class _SkeletonState extends State<Skeleton> {
     );
   }
 
+  Future<int> _getTotalSeconds() async {
+    final prefs = await SharedPreferences.getInstance();
+    int hour = prefs.getInt(hKeyW) ?? 0;
+    int minute = prefs.getInt(mKeyW) ?? 25;
+
+    return Duration(hours: hour, minutes: minute).inSeconds;
+  }
+
   var timerObj;
   //start the countdown timer
   void startTimer() {
     isRunning = true;
-    print('started');
     countDownTimer = new CountdownTimer(
       new Duration(seconds: _start),
       new Duration(seconds: 1),
@@ -85,9 +174,16 @@ class _SkeletonState extends State<Skeleton> {
   void setTimer() {
     setState(() {
       if (globals.index == 0) {
-        _totalSeconds = 10;
+        //_totalSeconds = 10;
+        _getTotalSeconds().then((totalSeconds) {
+          setState(() {
+            _totalSeconds = totalSeconds;
+            print('total seconds now $_totalSeconds earlier');
+            setupTimer();
+          });
+        });
       } else {
-        _totalSeconds = 5;
+        _totalSeconds = 5 * 60; //ned insert break time here
       }
       setupTimer();
     });
@@ -122,7 +218,11 @@ class _SkeletonState extends State<Skeleton> {
     return GestureDetector(
       onLongPressUp: () {
         onFinished();
-        timerObj.cancel();
+        try {
+          timerObj.cancel();
+        } catch (err) {
+          print(err.toString());
+        }
       },
       child: Material(
         color: Colors.transparent,
@@ -131,6 +231,7 @@ class _SkeletonState extends State<Skeleton> {
           onTap: () {
             //TODO:
             if (isRunning == false) {
+              _showNotification();
               startTimer();
               setState(() {
                 _btmTextVisible = !_btmTextVisible;
@@ -149,6 +250,7 @@ class _SkeletonState extends State<Skeleton> {
                 }
               });
             }
+            
           },
           child: Container(
             height: height,
@@ -192,15 +294,16 @@ class _SkeletonState extends State<Skeleton> {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: paddingW),
       child: Opacity(
-        opacity: 1,
-        child: Text(
-          '${beautifyNumber(minute)} : ${beautifyNumber(seconds)}',
-          style: TextStyle(
-            color: Theme.of(context).textSelectionColor,
-            fontSize: 78,
+          opacity: 1,
+          child: Text(
+            '${beautifyNumber(minute)} : ${beautifyNumber(seconds)}',
+            style: TextStyle(
+              color: Theme.of(context).textSelectionColor,
+              fontSize: 78,
+            ),
+          )
+          //make a if statement with has hour to show hour
           ),
-        ),
-      ),
     );
   }
 
@@ -221,6 +324,25 @@ class _SkeletonState extends State<Skeleton> {
               fontSize: 54,
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class SecondRoute extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('AlertPage'),
+      ),
+      body: Center(
+        child: RaisedButton(
+          onPressed: () {
+            Navigator.pop(context);
+          },
+          child: Text('go back...'),
         ),
       ),
     );
