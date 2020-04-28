@@ -24,7 +24,6 @@ class _SkeletonState extends State<Skeleton> {
   int _totalSeconds = 25 * 60; //actual total seconds to countdown
   int _start = 0;
   int _current = 0;
-  bool isRunning = false;
   bool _btmTextVisible = true;
   bool firstTap = false;
   String pomodoroText = 'Tap to begin';
@@ -62,7 +61,6 @@ class _SkeletonState extends State<Skeleton> {
         'Break Time is over!',
         scheduledNotificationDateTime,
         platformChannelSpecifics);
-    
   }
 
   Future<void> _demoNotification() async {
@@ -83,10 +81,7 @@ class _SkeletonState extends State<Skeleton> {
 
   //end of notification
 
-  @override
-  void initState() {
-    super.initState();
-
+  void refreshTotalSeconds() {
     _getTotalSeconds().then((totalSeconds) {
       setState(() {
         _totalSeconds = totalSeconds;
@@ -94,6 +89,14 @@ class _SkeletonState extends State<Skeleton> {
         setupTimer();
       });
     });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    refreshTotalSeconds();
+    globals.globalTimer = _totalSeconds;
     SystemChrome.setSystemUIOverlayStyle(
       SystemUiOverlayStyle(statusBarColor: globals.bgColor[globals.index]),
     );
@@ -156,7 +159,6 @@ class _SkeletonState extends State<Skeleton> {
   var timerObj;
   //start the countdown timer
   void startTimer() {
-    isRunning = true;
     countDownTimer = new CountdownTimer(
       new Duration(seconds: _start),
       new Duration(seconds: 1),
@@ -165,6 +167,7 @@ class _SkeletonState extends State<Skeleton> {
     var sub = countDownTimer.listen(null);
     sub.onData((duration) {
       setState(() {
+        globals.isRunning = true;
         _current = _start - duration.elapsed.inSeconds;
         seconds = getSeconds(_current);
         minute = getMinute(_current);
@@ -181,7 +184,7 @@ class _SkeletonState extends State<Skeleton> {
   void onFinished() {
     print("Done");
     setState(() {
-      isRunning = false;
+      globals.isRunning = false;
       widget.switchBGColor();
       firstTap = false;
     });
@@ -193,13 +196,7 @@ class _SkeletonState extends State<Skeleton> {
     setState(() {
       if (globals.index == 0) {
         //_totalSeconds = 10;
-        _getTotalSeconds().then((totalSeconds) {
-          setState(() {
-            _totalSeconds = totalSeconds;
-            print('total seconds now $_totalSeconds earlier');
-            setupTimer();
-          });
-        });
+        refreshTotalSeconds();
       } else {
         _totalSeconds = 5; //ned insert break time here
       }
@@ -247,9 +244,9 @@ class _SkeletonState extends State<Skeleton> {
         child: InkWell(
           splashColor: Colors.white54,
           onTap: () {
-            //TODO:
-            if (isRunning == false) {
-              _showNotification();
+            if (globals.isRunning == false) {
+              //_showNotification();
+              refreshTotalSeconds();
               startTimer();
               setState(() {
                 _btmTextVisible = !_btmTextVisible;
@@ -311,16 +308,25 @@ class _SkeletonState extends State<Skeleton> {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: paddingW),
       child: Opacity(
-          opacity: 1,
-          child: Text(
-            '${beautifyNumber(minute)} : ${beautifyNumber(seconds)}',
-            style: TextStyle(
-              color: Theme.of(context).textSelectionColor,
-              fontSize: 78,
-            ),
-          )
-          //make a if statement with has hour to show hour
-          ),
+        opacity: 1,
+        child: (globals.isRunning)
+            ? Text(
+                '${beautifyNumber(minute)} : ${beautifyNumber(seconds)}',
+                style: TextStyle(
+                  color: Theme.of(context).textSelectionColor,
+                  fontSize: 78,
+                ),
+              )
+            : Text(
+                '${beautifyNumber(getMinute(globals.globalTimer))} : ${beautifyNumber(getSeconds(globals.globalTimer))}',
+                style: TextStyle(
+                  color: Theme.of(context).textSelectionColor,
+                  fontSize: 78,
+                ),
+              ),
+
+        //make a if statement with has hour to show hour
+      ),
     );
   }
 

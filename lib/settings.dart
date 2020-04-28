@@ -2,12 +2,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:simple_pomodoro/global.dart' as globals;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:simple_pomodoro/skeleton.dart';
 
 class Settings extends StatefulWidget {
-  final Function settingsUpdated;
+  final Function rebuildHome;
 
-  Settings(this.settingsUpdated);
+  Settings(this.rebuildHome);
 
   @override
   _SettingsState createState() => _SettingsState();
@@ -112,8 +111,9 @@ class _SettingsState extends State<Settings> {
         wHour = workTimer.inHours;
         wMinute = workTimer.inMinutes % 60;
         _setWorkTimer(wHour, wMinute);
-        //update value notifier value
-        widget.settingsUpdated();
+        globals.globalTimer = workTimer.inSeconds;
+        widget.rebuildHome();
+        print("hopefully change the timer by now");
         Navigator.of(context).pop();
       }
     });

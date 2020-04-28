@@ -17,14 +17,7 @@ class _HomeState extends State<Home> {
   GlobalKey rectGetterKey = RectGetter.createGlobalKey();
   Rect rect;
   bool settingPage = false;
-  ValueNotifier<int> settingsUpdated = new ValueNotifier(0);
-
-  void changedSettings() {
-    setState(() {
-      settingsUpdated.value += 1;
-      print(" changed my settings liao ${settingsUpdated.value}");
-    });
-  }
+  int rebuildCounter = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -32,32 +25,40 @@ class _HomeState extends State<Home> {
       body: Stack(
         children: <Widget>[
           backgroundColor(),
-          ValueListenableBuilder(
-            valueListenable: settingsUpdated,
-            builder: (BuildContext context, int value, Widget child) {
-              return Skeleton(switchBGColor);
-            },
-          ),
-          settingBtn(),
+          StatefulBuilder(builder: (context, StateSetter setState) {
+            print("global timer in the rebuild ${globals.globalTimer}" );
+            return Stack(
+              children: <Widget>[
+                Skeleton(switchBGColor),
+                settingBtn(() {
+                  setState(() {
+                    rebuildCounter++;
+                    print(rebuildCounter);
+                  });
+                }),
+              ],
+            );
+          }),
           _ripple(),
         ],
       ),
     );
   }
 
-  void _onTap() async {
+  void _onTap(incrementCounter) async {
     setState(() => rect = RectGetter.getRectFromKey(rectGetterKey));
     WidgetsBinding.instance.addPostFrameCallback((_) {
       setState(() =>
           rect = rect.inflate(1.3 * MediaQuery.of(context).size.longestSide));
-      Future.delayed(animationDuration + delay, _goToNextPage);
+      Future.delayed(
+          animationDuration + delay, () => _goToNextPage(incrementCounter));
     });
   }
 
-  void _goToNextPage() {
+  void _goToNextPage(incrementCounter) {
     Navigator.of(context)
         .push(MaterialPageRoute(
-          builder: (context) => Settings(changedSettings),
+          builder: (context) => Settings(incrementCounter),
         ))
         .then((_) => setState(() => rect = null));
   }
@@ -82,7 +83,7 @@ class _HomeState extends State<Home> {
     );
   }
 
-  Widget settingBtn() {
+  Widget settingBtn(incrementCounter) {
     return RectGetter(
       key: rectGetterKey,
       child: Positioned(
@@ -92,7 +93,7 @@ class _HomeState extends State<Home> {
             backgroundColor: Colors.transparent,
             elevation: 0.0,
             child: Icon(Icons.settings),
-            onPressed: _onTap),
+            onPressed: () => _onTap(incrementCounter)),
       ),
     );
   }
